@@ -4,9 +4,9 @@ Created on Oct 13, 2015
 @author: gaurav
 '''
 
-from collections import defaultdict, OrderedDict
-from numpy.linalg import norm
-from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, pprint, test_file
+from collections         import defaultdict, OrderedDict
+from numpy.linalg        import norm
+from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, preProcessContextData, test_file
 
 def getTrainingContextData():
     
@@ -27,9 +27,13 @@ def getTrainingContextData():
             pre_context  = word_instance.find('context').text.split()
             post_context = word_instance.find('context').find('head').tail.split()
             
+            #Pre-processing the pre-context and post context
+            #TODO: Check why this is reducing the accuracy of the model by 1%
+            pre_context = preProcessContextData(pre_context)
+            post_context = preProcessContextData(post_context)
+            
             training_data[word_type]['training'][instance] = {"Sense":senses, "Pre-Context":pre_context, "Post-Context":post_context }
         
-        #break #TODO: Remove this breakpoint. Only testing for one word type right now
     return training_data
 
 def getTestContextData(test_data):
@@ -46,13 +50,16 @@ def getTestContextData(test_data):
             instance = word_instance.attrib['id']
             pre_context  = word_instance.find('context').text.split()
             post_context = word_instance.find('context').find('head').tail.split()
-             
+            
+            pre_context = preProcessContextData(pre_context)
+            post_context = preProcessContextData(post_context)
+            
             test_data[word_type]['test'][instance] = {"Pre-Context":pre_context, "Post-Context":post_context }
             
         #break#TODO: Remove this breakpoint. Only testing for one word type right now
     return test_data
 
-def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size = 20):
+def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size = 10):
     '''
         Creates the feature vector for each word instance by reading the word vectors
         from the word to vec data frame that we created
