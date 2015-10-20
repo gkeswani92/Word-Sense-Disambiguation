@@ -15,7 +15,7 @@ dir_path      = os.path.dirname(__file__) + '/'
 training_file = 'DataFiles/training-data.data'
 test_file     = 'DataFiles/test-data.data'
 word2vec_file = 'DataFiles/word_vector_subset.pkl'
-feature_vec   = 'DataFiles/feature_vector'
+feature_vec   = 'DataFiles/feature_vector.json'
 predictions   = 'DataFiles/predictions.csv'
 
 def initializeXMLParser(path):
