@@ -4,13 +4,13 @@ Created on Oct 13, 2015
 @author: gaurav
 '''
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from numpy.linalg import norm
-from DataProcessing.Util import initializeXMLParser, dir_path, training_file, test_file, readWordToVector, saveContextVectorData
+from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, pprint, test_file
 
 def getTrainingContextData():
     
-    training_data = defaultdict(lambda: defaultdict(dict))
+    training_data = OrderedDict()
     
     #Initialising the xml parser for the training and test set
     training_root = initializeXMLParser(dir_path+training_file) 
@@ -18,6 +18,7 @@ def getTrainingContextData():
     #Grabbing one word type at a time
     for word_type_xml in training_root:
         word_type = word_type_xml.attrib['item']
+        training_data[word_type] = defaultdict(lambda: defaultdict(dict))
         
         #Grabbing the instance id and its list of senses
         for word_instance in word_type_xml:
@@ -27,29 +28,31 @@ def getTrainingContextData():
             post_context = word_instance.find('context').find('head').tail.split()
             
             training_data[word_type]['training'][instance] = {"Sense":senses, "Pre-Context":pre_context, "Post-Context":post_context }
-
+        
+        #break #TODO: Remove this breakpoint. Only testing for one word type right now
     return training_data
 
 def getTestContextData(test_data):
-    
+     
     #Initialising the xml parser for the training and test set
     training_root = initializeXMLParser(dir_path + test_file) 
-    
+     
     #Grabbing one word type at a time
     for word_type_xml in training_root:
         word_type = word_type_xml.attrib['item']
-        
+         
         #Grabbing the instance id and its list of senses
         for word_instance in word_type_xml:
             instance = word_instance.attrib['id']
             pre_context  = word_instance.find('context').text.split()
             post_context = word_instance.find('context').find('head').tail.split()
-            
+             
             test_data[word_type]['test'][instance] = {"Pre-Context":pre_context, "Post-Context":post_context }
-
+            
+        #break#TODO: Remove this breakpoint. Only testing for one word type right now
     return test_data
 
-def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size = 10):
+def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size = 20):
     '''
         Creates the feature vector for each word instance by reading the word vectors
         from the word to vec data frame that we created
@@ -109,8 +112,8 @@ def main():
     print("Retrieved data from the training file")
     
     #Adding data from the test file to the same context data
-    #context_data = getTestContextData(context_data)
-    #print("Retrieved data from the test file")
+    context_data = getTestContextData(context_data)
+    print("Retrieved data from the test file")
         
     #Reading in the word to vector dataframe
     word_vector_subset = readWordToVector()
@@ -118,6 +121,7 @@ def main():
     
     #Create the feature vector for each instance id in the above data structure and save it in JSON format
     context_feature_data = makeFeatureVectorForWordInstance(context_data, word_vector_subset)
+    #pprint(context_feature_data)
     saveContextVectorData(context_feature_data)
     print("Created the word vectors for all word types and their instances")
 
