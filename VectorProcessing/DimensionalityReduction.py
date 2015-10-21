@@ -87,8 +87,13 @@ def predictSenseOfTestData(naive_bayes_model, feature_vector_data):
         
         for instance_sense, feature in instance_sense_dict.iteritems():
             if instance_sense[1] == '<UNKNOWN>':
-                test_predictions.append([instance_sense[0]] + list(nb.predict([feature])))
-    
+                naive_bayes_probabilities = nb.predict_proba([feature])[0]
+                
+                predictions = [nb.classes_[i] for i in xrange(len(naive_bayes_probabilities)) if abs(max(naive_bayes_probabilities) - naive_bayes_probabilities[i]) < 0.001]
+                instance_prediction = [(instance_sense[0])]
+                instance_prediction.append(' '.join(predictions))
+                test_predictions.append(instance_prediction)
+                
     return test_predictions
                 
 def plotModel():

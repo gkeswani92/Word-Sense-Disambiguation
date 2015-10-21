@@ -34,6 +34,7 @@ def getTrainingContextData():
             
             training_data[word_type]['training'][instance] = {"Sense":senses, "Pre-Context":pre_context, "Post-Context":post_context }
         
+        #break;#TODO: Remove this breakpoint. Only testing for one word type right now
     return training_data
 
 def getTestContextData(test_data):
