@@ -19,6 +19,9 @@ feature_vec   = 'DataFiles/feature_vector.json'
 predictions   = 'DataFiles/predictions.csv'
 
 def preProcessContextData(context_words):
+    '''
+    Consider also lowering the case of all the words, and performing stemming
+    '''
     
     #Remove all words that are of 3 characters of less
     context_words = [x for x in context_words if len(x)>3]

@@ -52,5 +52,5 @@ with open(path_to_word_vectors) as infile:
             w2v_dict.update({split_line[0]: map(float,split_line[1:301])})
 
 w2v_df = pd.DataFrame(data=w2v_dict)
-w2v_df.to_csv(dir_path+'word_vector_subset.csv')
+# w2v_df.to_csv(dir_path+'word_vector_subset.csv')
 w2v_df.to_pickle(dir_path+'word_vector_subset.pkl') # csv file is too large, pickle it instead
