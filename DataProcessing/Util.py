@@ -18,6 +18,7 @@ test_file     = 'DataFiles/test-data.data'
 word2vec_file = 'DataFiles/word_vector_subset.pkl'
 feature_vec   = 'DataFiles/feature_vector.json'
 predictions   = 'DataFiles/predictions.csv'
+validation    = 'DataFiles/validation.json'
 
 def preProcessContextData(context_words):
     '''
@@ -62,6 +63,15 @@ def saveContextVectorData(context_feature_data):
     '''
     f = open(dir_path + feature_vec, "w")
     json.dump(context_feature_data, f)
+    f.close()
+    
+def saveValidationData(results):
+    '''
+        Saves the feature vector data for the current configuration of window size
+        and pre processing
+    '''
+    f = open(dir_path + validation, "w")
+    json.dump(results, f)
     f.close()
 
 def pprint(myDict):

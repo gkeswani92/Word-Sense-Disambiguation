@@ -6,3 +6,5 @@
 *.xml
 .idea/scopes/scope_settings.xml
 .idea/Word-Sense-Disambiguation.iml
+
+*.pyc
