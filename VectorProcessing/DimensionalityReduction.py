@@ -4,11 +4,12 @@ Created on Oct 17, 2015
 @author: gaurav
 '''
 
-from DataProcessing.Util import readContextVectorData, savePredictionsToCSV
+from DataProcessing.Util import readContextVectorData, savePredictionsToCSV, use_SVM
 from collections import OrderedDict, defaultdict
 from sklearn.manifold import TSNE
 from sklearn.naive_bayes import GaussianNB
-import numpy
+from sklearn.svm import SVC
+import numpy as np
 
 def performDimensionalityReduction(context_vector):
     '''
@@ -32,7 +33,7 @@ def performDimensionalityReduction(context_vector):
                     feature_vector_word_type[(instance, sense)] = context_details["Feature_Vector"]
         
         #Applying TSNE on all the feature vectors
-        feature_vector_array = numpy.array(feature_vector_word_type.values())
+        feature_vector_array = np.array(feature_vector_word_type.values())
         model = TSNE(n_components=2, random_state=0, perplexity=5, metric="cosine")
         model.fit(feature_vector_array)
         
@@ -46,10 +47,10 @@ def performDimensionalityReduction(context_vector):
 
     return feature_vector_data, word_type_model
 
-def createNaiveBayesModel(feature_vector_data):
+def createNaiveBayesModels(feature_vector_data):
     '''
         Uses the dimensionally reduced feature vectors of each of the instance, sense id pairs
-        to create a naive bayes model
+        to create a naive bayes model for each word type
     '''
     naive_bayes_model_word_type = {}
     
@@ -67,35 +68,89 @@ def createNaiveBayesModel(feature_vector_data):
                 vectors.append(instance_sense_dict.values()[i])
                 senses.append(sense)
             
-        vectors = numpy.array(vectors)
-        senses = numpy.array(senses)
+        vectors = np.array(vectors)
+        senses = np.array(senses)
         nb = GaussianNB()
         nb.fit(vectors, senses)
         naive_bayes_model_word_type[word_type] = nb
     
     return naive_bayes_model_word_type
 
-def predictSenseOfTestData(naive_bayes_model, feature_vector_data):
+def predictedTestSenseNB(naive_bayes_model, feature_vector_data):
     '''
         Uses the naive bayes model created using the training data to predict
         the senses of the test data
     '''
     test_predictions = []
-    
+
     for word_type, instance_sense_dict in feature_vector_data.iteritems():
         nb = naive_bayes_model[word_type]
-        
+
         for instance_sense, feature in instance_sense_dict.iteritems():
             if instance_sense[1] == '<UNKNOWN>':
                 naive_bayes_probabilities = nb.predict_proba([feature])[0]
-                
+
                 predictions = [nb.classes_[i] for i in xrange(len(naive_bayes_probabilities)) if abs(max(naive_bayes_probabilities) - naive_bayes_probabilities[i]) < 0.001]
                 instance_prediction = [(instance_sense[0])]
                 instance_prediction.append(' '.join(predictions))
                 test_predictions.append(instance_prediction)
-                
+
     return test_predictions
-                
+
+def createSVMModels(context_data):
+    '''
+        Uses the original 300-dimensional feature vectors to create a SVM classifier for each word type
+    '''
+    SVM_model_word_type = {}
+
+    for word_type, word_type_data in context_data.iteritems():
+        type_context_vector_list = []
+        type_sense_list = []
+        for instance, context_details in word_type_data['training'].iteritems():
+            instance_context_vec = context_details['Feature_Vector']
+            instance_sense_list = context_details['Sense']
+            for sense in instance_sense_list: # replicate the context vectors as needed
+                type_context_vector_list.append(instance_context_vec)
+                type_sense_list.append(sense)
+
+        context_array = np.array(type_context_vector_list)
+        sense_array = np.array(type_sense_list)
+
+        svm = SVC(C=1.0, kernel='rbf', gamma=0.0, probability=True, random_state=0)
+        svm.fit(context_array, sense_array)
+
+        SVM_model_word_type[word_type] = svm
+
+    return SVM_model_word_type
+
+def predictedTestSenseSVM(SVM_model, context_data):
+    '''
+        Uses the naive bayes model created using the training data to predict
+        the senses of the test data
+    '''
+    test_predictions = []
+
+    for word_type, word_type_data in context_data.iteritems():
+        type_context_vector_list = []
+        instance_id_list = []
+        for instance, context_details in word_type_data['test'].iteritems():
+            type_context_vector_list.append(context_details['Feature_Vector'])
+            instance_id_list.append(instance)
+
+        context_array = np.array(type_context_vector_list)
+        svm = SVM_model[word_type]
+        svm_probabilities = svm.predict_proba(context_array)
+
+        # Loop over the instance predictions:
+        instance_predictions = []
+        for pred in range(len(instance_id_list)):
+            predictions = [svm.classes_[i] for i in xrange(svm_probabilities.shape[1]) if abs(max(svm_probabilities[pred,:]) - svm_probabilities[pred,i]) < 0.001]
+            instance_predictions.append([instance_id_list[pred], ' '.join(predictions)])
+
+        test_predictions.extend(instance_predictions)
+
+    return test_predictions
+
 def plotModel():
     pass
 #     #print([ord(x[1][-1]) for x in feature_vector_word_type])
@@ -114,16 +169,24 @@ def main():
     
     #Reads in the json file for the context vector data
     context_vector = readContextVectorData()
-    
-    feature_vector_data, _ = performDimensionalityReduction(context_vector)
-    print("Reduced the dimensionality of the training and test vectors")
-    
-    naive_bayes_model = createNaiveBayesModel(feature_vector_data)
-    print("Created the naive bayes model using the training vectors")
-    
-    test_predictions = predictSenseOfTestData(naive_bayes_model, feature_vector_data)
-    print("Predicted the sense of all test instances")
-    savePredictionsToCSV(test_predictions)    
+
+    if use_SVM:
+        SVM_models = createSVMModels(context_vector)
+        print("Created the SVM models using the training vectors")
+
+        test_predictions = predictedTestSenseSVM(SVM_models, context_vector)
+        print("Predicted the sense of all test instances")
+    else:
+        feature_vector_data, _ = performDimensionalityReduction(context_vector)
+        print("Reduced the dimensionality of the training and test vectors")
+
+        naive_bayes_models = createNaiveBayesModels(feature_vector_data)
+        print("Created the naive bayes models using the training vectors")
+
+        test_predictions = predictedTestSenseNB(naive_bayes_models, feature_vector_data)
+        print("Predicted the sense of all test instances")
+
+    savePredictionsToCSV(test_predictions)
 
 if __name__ == "__main__":
     main()

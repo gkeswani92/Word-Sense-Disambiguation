@@ -130,10 +130,9 @@ def getWordFreqs(context_data):
     '''
     word_counter = Counter()
     for word_type, word_type_data in context_data.iteritems():
-        for data_type, instance_details in word_type_data.iteritems():
-            for instance, context_details in instance_details.iteritems():
-                word_counter.update(context_details['Pre-Context'])
-                word_counter.update(context_details['Post-Context'])
+        for instance, context_details in word_type_data['training'].iteritems():
+            word_counter.update(context_details['Pre-Context'])
+            word_counter.update(context_details['Post-Context'])
 
     return word_counter
 

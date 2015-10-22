@@ -11,6 +11,7 @@ import json
 import os
 import csv
 
+use_SVM       = True
 dir_path      = os.path.dirname(__file__) + '/'
 training_file = 'DataFiles/training-data.data'
 test_file     = 'DataFiles/test-data.data'
