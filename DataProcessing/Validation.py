@@ -25,12 +25,12 @@ perplexity_options   = xrange(5, 31, 5)
 naive_bayes_window   = [0.01, 0.05, 0.005]
 
 #SVM grid search params
-c_range = np.logspace(-1, 8, 2) #np.logspace(-1, 8, 8) #[3340.48]#
-gamma_range = np.logspace(-8, 1, 2) #np.logspace(-8, 1, 8) #[8.03e-7]#
+c_range = np.logspace(-1, 8, 8) #[3340.48]#
+gamma_range = np.logspace(-8, 1, 8) #[8.03e-7]#
 svm_range = [0.001]
 
 #Gaussing weighting
-std = [80]#xrange(10, 91, 10)
+std = xrange(10, 91, 20)
 
 correct_count = 0
 prediction_count = 0
@@ -373,10 +373,10 @@ def grid_search(method = "SVM"):
                 for g in gamma_range:
                     for srange in svm_range:
                         for s in std:
-                            start = time.time()
+                            #start = time.time()
                             results[str((window_size, c, g, srange,s))]= controller(method, context_data, word_vector_subset, window_size, "", "", "", c, g, srange,s)
-                            end = time.time()
-                            print(end-start)
+                            #end = time.time()
+                            #print(end-start)
                             total -= 1
                             print("{0} to go".format(total))
                             #break
