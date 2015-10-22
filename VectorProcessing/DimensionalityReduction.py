@@ -176,6 +176,7 @@ def main():
 
         test_predictions = predictedTestSenseSVM(SVM_models, context_vector)
         print("Predicted the sense of all test instances")
+        
     else:
         feature_vector_data, _ = performDimensionalityReduction(context_vector)
         print("Reduced the dimensionality of the training and test vectors")
