@@ -11,6 +11,7 @@ import json
 import os
 import csv
 
+norm_word_counts = False
 use_SVM       = True
 dir_path      = os.path.dirname(__file__) + '/'
 training_file = 'DataFiles/training-data.data'

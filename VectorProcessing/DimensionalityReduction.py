@@ -116,7 +116,7 @@ def createSVMModels(context_data):
         context_array = np.array(type_context_vector_list)
         sense_array = np.array(type_sense_list)
 
-        svm = SVC(C=1.0, kernel='rbf', gamma=0.0, probability=True, random_state=0)
+        svm = SVC(C=3340.48, kernel='rbf', gamma=8.03e-7, probability=True, random_state=0)
         svm.fit(context_array, sense_array)
 
         SVM_model_word_type[word_type] = svm

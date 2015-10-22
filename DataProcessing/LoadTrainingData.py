@@ -6,7 +6,7 @@ Created on Oct 13, 2015
 
 from collections         import defaultdict, OrderedDict
 from numpy.linalg        import norm
-from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, preProcessContextData, test_file
+from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, preProcessContextData, test_file, norm_word_counts
 from collections import Counter
 
 def getTrainingContextData():
@@ -61,7 +61,7 @@ def getTestContextData(test_data):
         #break#TODO: Remove this breakpoint. Only testing for one word type right now
     return test_data
 
-def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs, window_size = 10):
+def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs, window_size = 50):
     '''
         Creates the feature vector for each word instance by reading the word vectors
         from the word to vec data frame that we created
@@ -147,7 +147,10 @@ def main():
     print("Retrieved data from the test file")
 
     #Obtain training word counts to be used as (inverse) vector weights
-    word_freqs = getWordFreqs(context_data)
+    if norm_word_counts == True:
+        word_freqs = getWordFreqs(context_data)
+    else:
+        word_freqs = Counter()
 
     #Reading in the word to vector dataframe
     word_vector_subset = readWordToVector()
