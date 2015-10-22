@@ -4,7 +4,7 @@ Created on Oct 21, 2015
 @author: gaurav
 '''
 
-from DataProcessing.Util import initializeXMLParser, dir_path, training_file, preProcessContextData, pprint, readWordToVector, saveValidationData
+from DataProcessing.Util import initializeXMLParser, dir_path, training_file, preProcessContextData, pprint, readWordToVector, saveValidationData, gaussian_weighting
 from collections         import defaultdict, OrderedDict
 from numpy.linalg        import norm
 from sklearn.manifold    import TSNE
@@ -12,11 +12,12 @@ from sklearn.naive_bayes import GaussianNB
 import random
 import numpy as np
 from sklearn.svm import SVC
-import pickle
+from scipy.signal import gaussian
+import time
 
 #General grid search params
 sample_size          = 15
-window_size_options  = [50] #xrange(10,101,10)
+window_size_options  = [1000] #xrange(10,101,10)
 
 #Naive Bayes grid search params
 n_components_options = xrange(2,21,2)
@@ -24,9 +25,12 @@ perplexity_options   = xrange(5, 31, 5)
 naive_bayes_window   = [0.01, 0.05, 0.005]
 
 #SVM grid search params
-c_range = [3340.48]#np.logspace(-2, 10, 13)
-gamma_range = [8.03e-7]#np.logspace(-9, 3, 13)
-svm_range = [0.001, 0.005, 0.01, 0.05]
+c_range = np.logspace(-1, 7, 9) #[3340.48]#
+gamma_range = np.logspace(-7, 1, 9) #[8.03e-7]#
+svm_range = [0.001]
+
+#Gaussing weighting
+std = xrange(10,101,10)
 
 correct_count = 0
 prediction_count = 0
@@ -80,7 +84,22 @@ def createValidationData(training_data):
     
     return training_data
 
-def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size = 10):
+def getGaussianWeights(context_details, std):
+    context_len = len(context_details['Pre-Context']) + len(context_details['Post-Context'])
+    if gaussian_weighting == True:
+        num_weights = 2 * max(len(context_details['Pre-Context']), len(context_details['Post-Context']))
+        weights = gaussian(num_weights, std)
+        if len(context_details['Pre-Context']) > len(context_details['Post-Context']):
+            trimmed_weights = weights[:context_len]
+        elif len(context_details['Pre-Context']) < len(context_details['Post-Context']):
+            trimmed_weights = weights[-context_len:]
+        else:
+            trimmed_weights = weights
+        return trimmed_weights
+    else:
+        return [1.0]*context_len
+    
+def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size, std):
     '''
         Creates the feature vector for each word instance by reading the word vectors
         from the word to vec data frame that we created
@@ -90,20 +109,25 @@ def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_si
             for instance, context_details in instance_details.iteritems():
                 
                 context        = getContextWordsinWindow(context_details, window_size)
-                feature_vector = createFeatureVectorFromContext(context, word_vector_subset)
+                gaussian_weights = getGaussianWeights(context_details, std)
+                
+                feature_vector = createFeatureVectorFromContext(context, word_vector_subset, gaussian_weights)
                 context_data[word_type][data_type][instance].update({"Feature_Vector":feature_vector})
                 
     return context_data            
     
-def createFeatureVectorFromContext(context, word_vector_subset):
+def createFeatureVectorFromContext(context, word_vector_subset, gaussian_weights):
     '''
         Creates the feature vector from the google word2vec vectors depending on 
         the context words passed in
     '''
+
     token_vectors           = word_vector_subset.ix[:,context]
-    vectors_sum             = token_vectors.sum(axis = 1)
-    normalised_vectors      = vectors_sum / norm(vectors_sum)
-    normalised_vector_list  = normalised_vectors.tolist()
+    # Before summing, weight the vectors by their inverse counts
+    weighted_token_vectors  = token_vectors * gaussian_weights
+    vector_sum              = weighted_token_vectors.sum(axis = 1)
+    normalised_vector       = vector_sum / norm(vector_sum)
+    normalised_vector_list  = normalised_vector.tolist()
     return normalised_vector_list
                   
 def getContextWordsinWindow(context_details, window_size):
@@ -233,7 +257,7 @@ def createSVMModels(context_data, c, g):
     for word_type, word_type_data in context_data.iteritems():
         type_context_vector_list = []
         type_sense_list = []
-        for instance, context_details in word_type_data['training'].iteritems():
+        for _, context_details in word_type_data['training'].iteritems():
             instance_context_vec = context_details['Feature_Vector']
             instance_sense_list = context_details['Sense']
             for sense in instance_sense_list: # replicate the context vectors as needed
@@ -291,10 +315,10 @@ def predictedTestSenseSVM(SVM_model, context_data, svm_range):
     return test_predictions
 
 
-def controller(method, context_data, word_vector_subset, window_size, n_component="", perplexity="", nb_range="", c="", g ="", svm_range=""):
+def controller(method, context_data, word_vector_subset, window_size, n_component="", perplexity="", nb_range="", c="", g ="", svm_range="", s=""):
     
     #Create the feature vector for each instance id in the above data structure
-    context_feature_data = makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size)
+    context_feature_data = makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_size, s)
     
     if method != "SVM":
         feature_vector_data, _ = performDimensionalityReduction(context_feature_data, n_component, perplexity)
@@ -341,16 +365,21 @@ def grid_search(method = "SVM"):
                         print("{0} to go".format(total))
     
     else:
-        total = len(c_range) * len(gamma_range) *len(window_size_options)
+        total = len(c_range) * len(gamma_range) *len(window_size_options)*len(svm_range)*len(std)
         print("Total steps: {0}".format(total))
         
         for window_size in window_size_options:
             for c in c_range:
                 for g in gamma_range:
                     for srange in svm_range:
-                        results[str((window_size, c, g, srange))]= controller(method, context_data, word_vector_subset, window_size, "", "", "", c, g, srange)
-                        total -= 1
-                        print("{0} to go".format(total))
+                        for s in std:
+                            start = time.time()
+                            results[str((window_size, c, g, srange,s))]= controller(method, context_data, word_vector_subset, window_size, "", "", "", c, g, srange,s)
+                            end = time.time()
+                            print(end-start)
+                            total -= 1
+                            print("{0} to go".format(total))
+                            break
     
     
     pprint(results)
