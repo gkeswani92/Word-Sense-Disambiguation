@@ -84,9 +84,9 @@ def getGaussianWeights(context_details, std):
     if gaussian_weighting == True:
         num_weights = 2 * max(len(context_details['Pre-Context']), len(context_details['Post-Context']))
         weights = gaussian(num_weights, std)
-        if context_details['Pre-Context'] > context_details['Post-Context']:
+        if len(context_details['Pre-Context']) > len(context_details['Post-Context']):
             trimmed_weights = weights[:context_len]
-        elif context_details['Pre-Context'] < context_details['Post-Context']:
+        elif len(context_details['Pre-Context']) < len(context_details['Post-Context']):
             trimmed_weights = weights[-context_len:]
         else:
             trimmed_weights = weights
