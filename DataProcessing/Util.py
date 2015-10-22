@@ -11,6 +11,7 @@ import json
 import os
 import csv
 
+gaussian_weighting = True
 norm_word_counts = False
 use_SVM       = True
 dir_path      = os.path.dirname(__file__) + '/'

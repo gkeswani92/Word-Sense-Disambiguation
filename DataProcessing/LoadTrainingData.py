@@ -6,8 +6,9 @@ Created on Oct 13, 2015
 
 from collections         import defaultdict, OrderedDict
 from numpy.linalg        import norm
-from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, preProcessContextData, test_file, norm_word_counts
+from DataProcessing.Util import initializeXMLParser, dir_path, training_file, readWordToVector, saveContextVectorData, preProcessContextData, test_file, norm_word_counts, gaussian_weighting
 from collections import Counter
+from scipy.signal import gaussian
 
 def getTrainingContextData():
     
@@ -61,7 +62,7 @@ def getTestContextData(test_data):
         #break#TODO: Remove this breakpoint. Only testing for one word type right now
     return test_data
 
-def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs, window_size = 50):
+def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs, window_size = 1000, std=50):
     '''
         Creates the feature vector for each word instance by reading the word vectors
         from the word to vec data frame that we created
@@ -69,14 +70,31 @@ def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freq
     for word_type, word_type_data in context_data.iteritems():
         for data_type, instance_details in word_type_data.iteritems():
             for instance, context_details in instance_details.iteritems():
-                
-                context        = getContextWordsinWindow(context_details, window_size)
-                feature_vector = createFeatureVectorFromContext(context, word_vector_subset, word_freqs)
+
+                # Always grab the entire context; simply choose the gaussian sd differently
+                context          = getContextWordsinWindow(context_details, window_size)
+                gaussian_weights = getGaussianWeights(context_details, std)
+                feature_vector   = createFeatureVectorFromContext(context, word_vector_subset, word_freqs, gaussian_weights)
                 context_data[word_type][data_type][instance].update({"Feature_Vector":feature_vector})
                 
-    return context_data            
-    
-def createFeatureVectorFromContext(context, word_vector_subset, word_freqs):
+    return context_data
+
+def getGaussianWeights(context_details, std):
+    context_len = len(context_details['Pre-Context']) + len(context_details['Post-Context'])
+    if gaussian_weighting == True:
+        num_weights = 2 * max(len(context_details['Pre-Context']), len(context_details['Post-Context']))
+        weights = gaussian(num_weights, std)
+        if context_details['Pre-Context'] > context_details['Post-Context']:
+            trimmed_weights = weights[:context_len]
+        elif context_details['Pre-Context'] < context_details['Post-Context']:
+            trimmed_weights = weights[-context_len:]
+        else:
+            trimmed_weights = weights
+        return trimmed_weights
+    else:
+        return [1.0]*context_len
+
+def createFeatureVectorFromContext(context, word_vector_subset, word_freqs, gaussian_weights):
     '''
         Creates the feature vector from the google word2vec vectors depending on 
         the context words passed in
@@ -85,8 +103,8 @@ def createFeatureVectorFromContext(context, word_vector_subset, word_freqs):
     # print context
     token_vectors           = word_vector_subset.ix[:,context]
     # Before summing, weight the vectors by their inverse counts
-    weight_vec              = [1.0/word_freqs[word] if word in word_freqs else 1.0 for word in token_vectors.columns]
-    weighted_token_vectors  = token_vectors * weight_vec
+    counts_weights              = [1.0/word_freqs[word] if word in word_freqs else 1.0 for word in token_vectors.columns]
+    weighted_token_vectors  = token_vectors * counts_weights * gaussian_weights
     vector_sum              = weighted_token_vectors.sum(axis = 1)
     normalised_vector       = vector_sum / norm(vector_sum)
     normalised_vector_list  = normalised_vector.tolist()
@@ -101,19 +119,19 @@ def getContextWordsinWindow(context_details, window_size):
     post_context = context_details['Post-Context']    
     context      = []
     
-    if len(pre_context) >= window_size and len(post_context) >=window_size:
+    if len(pre_context) >= window_size and len(post_context) >= window_size:
         context = pre_context[-window_size:] + post_context[:window_size]
     
-    elif len(pre_context) < window_size:
+    elif len(pre_context) < window_size and len(post_context) >= window_size:
         post_index = 2*window_size- len(pre_context)
         context = pre_context + post_context[:post_index]
         
-    elif len(post_context) < window_size:
+    elif len(post_context) < window_size and len(pre_context) >= window_size:
         pre_index = 2*window_size- len(post_context)
         context = pre_context[-pre_index:] + post_context
     
     else:
-        print("Weird condition. Take note")
+        #print("Weird condition. Take note") # <-- with gaussian weighting, every condition will be "weird"
         context = pre_context + post_context
          
     return context
