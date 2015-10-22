@@ -20,17 +20,17 @@ sample_size          = 15
 window_size_options  = [1000] #xrange(10,101,10)
 
 #Naive Bayes grid search params
-n_components_options = xrange(2,21,2)
+n_components_options = xrange(2, 21, 2)
 perplexity_options   = xrange(5, 31, 5)
 naive_bayes_window   = [0.01, 0.05, 0.005]
 
 #SVM grid search params
-c_range = np.logspace(-1, 7, 9) #[3340.48]#
-gamma_range = np.logspace(-7, 1, 9) #[8.03e-7]#
+c_range = np.logspace(-1, 8, 2) #np.logspace(-1, 8, 8) #[3340.48]#
+gamma_range = np.logspace(-8, 1, 2) #np.logspace(-8, 1, 8) #[8.03e-7]#
 svm_range = [0.001]
 
 #Gaussing weighting
-std = xrange(10,101,10)
+std = [80]#xrange(10, 91, 10)
 
 correct_count = 0
 prediction_count = 0
@@ -379,7 +379,7 @@ def grid_search(method = "SVM"):
                             print(end-start)
                             total -= 1
                             print("{0} to go".format(total))
-                            break
+                            #break
     
     
     pprint(results)
