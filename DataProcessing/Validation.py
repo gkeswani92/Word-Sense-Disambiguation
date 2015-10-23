@@ -373,10 +373,10 @@ def grid_search(method = "SVM"):
                 for g in gamma_range:
                     for srange in svm_range:
                         for s in std:
-                            #start = time.time()
+                            start = time.time()
                             results[str((window_size, c, g, srange,s))]= controller(method, context_data, word_vector_subset, window_size, "", "", "", c, g, srange,s)
-                            #end = time.time()
-                            #print(end-start)
+                            end = time.time()
+                            print(end-start)
                             total -= 1
                             print("{0} to go".format(total))
                             #break

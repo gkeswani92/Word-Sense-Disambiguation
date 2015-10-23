@@ -62,7 +62,7 @@ def getTestContextData(test_data):
         #break#TODO: Remove this breakpoint. Only testing for one word type right now
     return test_data
 
-def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs, window_size = 1000, std=50):
+def makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs, window_size = 1000, std=10):
     '''
         Creates the feature vector for each word instance by reading the word vectors
         from the word to vec data frame that we created

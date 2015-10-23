@@ -8,3 +8,5 @@
 .idea/Word-Sense-Disambiguation.iml
 
 *.pyc
+
+*.docx
