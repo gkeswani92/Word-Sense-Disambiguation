@@ -8,22 +8,7 @@ import json
 import numpy as np
 from decimal import Decimal
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
 from collections import OrderedDict
-
-# Utility function to move the midpoint of a colormap to be around
-# the values of interest.
-
-class MidpointNormalize(Normalize):
-
-    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
-        self.midpoint = midpoint
-        Normalize.__init__(self, vmin, vmax, clip)
-
-    def __call__(self, value, clip=None):
-        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
-        return np.ma.masked_array(np.interp(value, x, y))
-
 
 validation_path = "/Users/gaurav/Downloads/validation.json"
 f = open(validation_path, 'r')
@@ -45,7 +30,7 @@ scores = np.array([key[2] for key in tuple_values], np.float32).reshape(len(uniq
 
 plt.figure(figsize=(8, 6))
 plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-plt.imshow(scores, interpolation='nearest', cmap='hot')#, norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
+plt.imshow(scores, interpolation='nearest', cmap='hot')
 plt.xlabel('gamma')
 plt.ylabel('C')
 plt.colorbar()
