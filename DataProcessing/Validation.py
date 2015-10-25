@@ -20,9 +20,9 @@ sample_size          = 15
 window_size_options  = [1000] #xrange(10,101,10)
 
 #Naive Bayes grid search params
-n_components_options = xrange(2, 21, 2)
-perplexity_options   = xrange(5, 31, 5)
-naive_bayes_window   = [0.01, 0.05, 0.005]
+n_components_options = [2]
+perplexity_options   = [5]
+naive_bayes_window   = [0.001]
 
 #SVM grid search params
 c_range = np.logspace(-1, 8, 8) #[3340.48]#
@@ -30,7 +30,7 @@ gamma_range = np.logspace(-8, 1, 8) #[8.03e-7]#
 svm_range = [0.001]
 
 #Gaussing weighting
-std = xrange(10, 91, 20)
+std =  [10,30,50,70,90]
 
 correct_count = 0
 prediction_count = 0
@@ -108,7 +108,7 @@ def makeFeatureVectorForWordInstance(context_data, word_vector_subset, window_si
         for data_type, instance_details in word_type_data.iteritems():
             for instance, context_details in instance_details.iteritems():
                 
-                context        = getContextWordsinWindow(context_details, window_size)
+                context          = getContextWordsinWindow(context_details, window_size)
                 gaussian_weights = getGaussianWeights(context_details, std)
                 
                 feature_vector = createFeatureVectorFromContext(context, word_vector_subset, gaussian_weights)
@@ -189,7 +189,7 @@ def performDimensionalityReduction(context_vector, n_component, perplexity):
         for i in range(len(feature_vector_word_type)):
             feature_vector_data[word_type][feature_vector_word_type.keys()[i]] = list(model.embedding_[i])
 
-    return feature_vector_data, word_type_model
+    return feature_vector_word_type, word_type_model
 
 def createNaiveBayesModel(feature_vector_data):
     '''
@@ -340,7 +340,7 @@ def controller(method, context_data, word_vector_subset, window_size, n_componen
     perc_correct = correct_count * 100.0/prediction_count
     return perc_correct
     
-def grid_search(method = "SVM"):
+def grid_search(method = "NB"):
     
     results = {}
     
@@ -353,16 +353,20 @@ def grid_search(method = "SVM"):
     print("Grabbed the word_vector_subset")
     
     if method == "NB":
-        total = len(window_size_options) * len(n_components_options) * len(perplexity_options) * len(naive_bayes_window)
+        total = len(window_size_options) * len(n_components_options) * len(perplexity_options) * len(std)
         print("Total steps: {0}".format(total))
         
         for window_size in window_size_options:
             for n_component in n_components_options:
                 for perplexity in perplexity_options:
-                    for nb_range in naive_bayes_window:
-                        results[str((window_size, n_component, perplexity))]= controller(method, context_data, word_vector_subset, window_size, n_component, perplexity, nb_range)
+                    for s in std:
+                        #start = time.time()
+                        results[str((window_size, n_component, perplexity, s))]= controller(method, context_data, word_vector_subset, window_size, n_component, perplexity, naive_bayes_window[0],"","","",s)
+                        #end = time.time()
+                        #print(end-start)
                         total -= 1
                         print("{0} to go".format(total))
+        
     
     else:
         total = len(c_range) * len(gamma_range) *len(window_size_options)*len(svm_range)*len(std)
@@ -379,6 +383,7 @@ def grid_search(method = "SVM"):
                             print(end-start)
                             total -= 1
                             print("{0} to go".format(total))
+                            break
                             #break
     
     
