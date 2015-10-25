@@ -1,7 +1,7 @@
 '''
 Created on Oct 17, 2015
 
-@author: gaurav
+@author: Gaurav Keswani and Jonathan Simon
 '''
 
 from DataProcessing.Util import readContextVectorData, savePredictionsToCSV, use_SVM

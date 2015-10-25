@@ -1,5 +1,0 @@
-Add a root tag at the top (“<data>”) and the bottom (“</data>”) of both the training and test files
-
-Parsing with the “recover=True” option eliminates tokens containing invalid characters, e.g. “&”
-
-This only effect a small minority of the contexts (<1%), and even within these contexts, only effects specific tokens

@@ -1,7 +1,7 @@
 '''
 Created on Oct 21, 2015
 
-@author: gaurav
+@author: Gaurav Keswani and Jonathan Simon
 '''
 
 from DataProcessing.Util import initializeXMLParser, dir_path, training_file, preProcessContextData, pprint, readWordToVector, saveValidationData, gaussian_weighting

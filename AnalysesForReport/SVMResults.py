@@ -1,7 +1,7 @@
 '''
 Created on Oct 24, 2015
 
-@author: gaurav
+@author: Gaurav Keswani and Jonathan Simon
 Referred http://scikit-learn.org/stable/auto_examples/svm/plot_rbf_parameters.html for the visualisation construction
 '''
 import json

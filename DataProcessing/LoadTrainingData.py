@@ -1,7 +1,7 @@
 '''
 Created on Oct 13, 2015
 
-@author: gaurav
+@author: Gaurav Keswani and Jonathan Simon
 '''
 
 from collections         import defaultdict, OrderedDict
