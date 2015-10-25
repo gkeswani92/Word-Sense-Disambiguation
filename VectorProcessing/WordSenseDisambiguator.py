@@ -41,7 +41,6 @@ def performDimensionalityReduction(context_vector):
         word_type_model[word_type] = model
         
         #Converting to a structure of {WordType: {(instanceID, senseID): FeatureVector ... }}
-        #TODO: Check why same instance id with different sense has difference feature vectors
         for i in range(len(feature_vector_word_type)):
             feature_vector_data[word_type][feature_vector_word_type.keys()[i]] = list(model.embedding_[i])
 
@@ -106,7 +105,7 @@ def createSVMModels(context_data):
     for word_type, word_type_data in context_data.iteritems():
         type_context_vector_list = []
         type_sense_list = []
-        for instance, context_details in word_type_data['training'].iteritems():
+        for _, context_details in word_type_data['training'].iteritems():
             instance_context_vec = context_details['Feature_Vector']
             instance_sense_list = context_details['Sense']
             for sense in instance_sense_list: # replicate the context vectors as needed
@@ -150,20 +149,6 @@ def predictedTestSenseSVM(SVM_model, context_data):
         test_predictions.extend(instance_predictions)
 
     return test_predictions
-
-def plotModel():
-    pass
-#     #print([ord(x[1][-1]) for x in feature_vector_word_type])
-#     sense_id_list = [x[1] for x in feature_vector_word_type]
-#     unique_sense_id_list = list(set(sense_id_list))
-#     sense_id_colors = [unique_sense_id_list.index(x) for x in sense_id_list]
-#          
-#     #plt.scatter([x[0] for x in model.embedding_], [x[1] for x in model.embedding_], c=[ord(x[1][-1])%6 for x in feature_vector_word_type])
-#     plt.scatter([x[0] for x in model.embedding_], [x[1] for x in model.embedding_], c=sense_id_colors)
-#     plt.show()
-#     #print(model.embedding_)
-#     #break
-                
 
 def main():
     

@@ -99,9 +99,8 @@ def createFeatureVectorFromContext(context, word_vector_subset, word_freqs, gaus
         Creates the feature vector from the google word2vec vectors depending on 
         the context words passed in
     '''
-    # print "Before crash, context is:"
-    # print context
     token_vectors           = word_vector_subset.ix[:,context]
+   
     # Before summing, weight the vectors by their inverse counts
     counts_weights              = [1.0/word_freqs[word] if word in word_freqs else 1.0 for word in token_vectors.columns]
     weighted_token_vectors  = token_vectors * counts_weights * gaussian_weights
@@ -131,7 +130,6 @@ def getContextWordsinWindow(context_details, window_size):
         context = pre_context[-pre_index:] + post_context
     
     else:
-        #print("Weird condition. Take note") # <-- with gaussian weighting, every condition will be "weird"
         context = pre_context + post_context
          
     return context
@@ -147,8 +145,8 @@ def getWordFreqs(context_data):
         set is likely to be rare, and thus have count roughly = 1
     '''
     word_counter = Counter()
-    for word_type, word_type_data in context_data.iteritems():
-        for instance, context_details in word_type_data['training'].iteritems():
+    for _, word_type_data in context_data.iteritems():
+        for _, context_details in word_type_data['training'].iteritems():
             word_counter.update(context_details['Pre-Context'])
             word_counter.update(context_details['Post-Context'])
 
@@ -176,7 +174,6 @@ def main():
     
     #Create the feature vector for each instance id in the above data structure and save it in JSON format
     context_feature_data = makeFeatureVectorForWordInstance(context_data, word_vector_subset, word_freqs)
-    #pprint(context_feature_data)
     saveContextVectorData(context_feature_data)
     print("Created the word vectors for all word types and their instances")
 

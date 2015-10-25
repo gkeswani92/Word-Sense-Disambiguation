@@ -13,7 +13,6 @@ import random
 import numpy as np
 from sklearn.svm import SVC
 from scipy.signal import gaussian
-import time
 
 #General grid search params
 sample_size          = 15
@@ -185,7 +184,6 @@ def performDimensionalityReduction(context_vector, n_component, perplexity):
         word_type_model[word_type] = model
         
         #Converting to a structure of {WordType: {(instanceID, senseID): FeatureVector ... }}
-        #TODO: Check why same instance id with different sense has difference feature vectors
         for i in range(len(feature_vector_word_type)):
             feature_vector_data[word_type][feature_vector_word_type.keys()[i]] = list(model.embedding_[i])
 
@@ -360,10 +358,7 @@ def grid_search(method = "NB"):
             for n_component in n_components_options:
                 for perplexity in perplexity_options:
                     for s in std:
-                        #start = time.time()
                         results[str((window_size, n_component, perplexity, s))]= controller(method, context_data, word_vector_subset, window_size, n_component, perplexity, naive_bayes_window[0],"","","",s)
-                        #end = time.time()
-                        #print(end-start)
                         total -= 1
                         print("{0} to go".format(total))
         
@@ -377,15 +372,10 @@ def grid_search(method = "NB"):
                 for g in gamma_range:
                     for srange in svm_range:
                         for s in std:
-                            start = time.time()
                             results[str((window_size, c, g, srange,s))]= controller(method, context_data, word_vector_subset, window_size, "", "", "", c, g, srange,s)
-                            end = time.time()
-                            print(end-start)
                             total -= 1
                             print("{0} to go".format(total))
-                            break
-                            #break
-    
+                            
     
     pprint(results)
     saveValidationData(results);
